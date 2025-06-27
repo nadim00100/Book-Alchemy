@@ -1,0 +1,68 @@
+# === Python Bytecode ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === Virtual Environments ===
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# === Environment & Secret Files ===
+.env
+.env.*   # .env.local, .env.development, etc.
+*.key
+*.pem
+*.crt
+
+# === Test/Logs/Cache Files ===
+*.log
+*.out
+*.tmp
+.cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# === Jupyter Notebooks ===
+.ipynb_checkpoints/
+
+# === Build/Dist Files ===
+build/
+dist/
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# === Tools and Editors ===
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# === macOS Files ===
+.DS_Store
+
+# === Windows Files ===
+Thumbs.db
+Desktop.ini
+
+# === Pycharm ===
+*.iml
+*.iws
+*.ipr
+out/
+
+# === Docker (if used) ===
+*.pid
+*.sock
+docker-compose.override.yml
+
+# === My personal settings ===
+*.local
+# === SQLite Databases ===
+*.sqlite
