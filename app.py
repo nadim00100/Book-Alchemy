@@ -1,17 +1,22 @@
 """
-Book Alchemy - Flask App with routes to add authors, books and display the library.
+Book Alchemy - Flask App Initialization and Routes
 """
-
 import os
-from flask import Flask, render_template, request
+
+from flask import (
+    Flask, render_template, request,
+    redirect, url_for, flash
+)
+from flask_sqlalchemy import SQLAlchemy
 
 from data_models import db, Author, Book
 
 app = Flask(__name__)
+app.secret_key = 'supersecret123'
+# Use absolute path for the SQLite database URI
+basedir = os.path.abspath(os.path.dirname(__file__))  # <-- get project root directory
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data/library.sqlite')
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-db_path = os.path.join(BASE_DIR, 'data', 'library.sqlite')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -25,10 +30,8 @@ def home():
     search_query = request.args.get('search', '').strip()
     sort_by = request.args.get('sort_by')
 
-    # Base query joining Author to Book for author filtering
     query = Book.query.join(Author)
 
-    # If search query is provided, filter books by title or author name (case-insensitive)
     if search_query:
         search_pattern = f"%{search_query}%"
         query = query.filter(
@@ -38,7 +41,6 @@ def home():
             )
         )
 
-    # Sorting logic
     if sort_by == 'title':
         query = query.order_by(Book.title.asc())
     elif sort_by == 'author':
@@ -52,65 +54,70 @@ def home():
 @app.route('/add_author', methods=['GET', 'POST'])
 def add_author():
     """
-    Display a form to add authors on GET.
-    On POST, add author to database and show success message.
+    Add a new author via form submission.
     """
-    message = None
-
     if request.method == 'POST':
-        name = request.form.get('name')
-        birth_date = request.form.get('birthdate')
+        name = request.form['name']
+        birth_date = request.form['birthdate']
         date_of_death = request.form.get('date_of_death')
 
-        # Convert string dates to date objects
-        from datetime import datetime
-
-        birth_date_obj = datetime.strptime(birth_date, '%Y-%m-%d').date()
-        date_of_death_obj = None
-        if date_of_death:
-            date_of_death_obj = datetime.strptime(date_of_death, '%Y-%m-%d').date()
-
-        new_author = Author(
+        author = Author(
             name=name,
-            birth_date=birth_date_obj,
-            date_of_death=date_of_death_obj
+            birth_date=birth_date,
+            date_of_death=date_of_death if date_of_death else None
         )
-        db.session.add(new_author)
+        db.session.add(author)
         db.session.commit()
+        flash(f"Author '{name}' added successfully.", "success")
 
-        message = f"Author '{name}' added successfully!"
-
-    return render_template('add_author.html', message=message)
+    return render_template('add_author.html')
 
 
 @app.route('/add_book', methods=['GET', 'POST'])
 def add_book():
     """
-    Display a form to add books on GET.
-    On POST, add book to database and show success message.
+    Add a new book via form submission.
     """
-    message = None
     authors = Author.query.order_by(Author.name).all()
 
     if request.method == 'POST':
-        isbn = request.form.get('isbn')
-        title = request.form.get('title')
-        publication_year = request.form.get('publication_year')
-        author_id = request.form.get('author_id')
+        title = request.form['title']
+        isbn = request.form['isbn']
+        publication_year = request.form['publication_year']
+        author_id = request.form['author_id']
 
-        new_book = Book(
-            isbn=isbn,
+        book = Book(
             title=title,
-            publication_year=int(publication_year),
-            author_id=int(author_id)
+            isbn=isbn,
+            publication_year=publication_year,
+            author_id=author_id
         )
-        db.session.add(new_book)
+        db.session.add(book)
+        db.session.commit()
+        flash(f"Book '{title}' added successfully.", "success")
+
+    return render_template('add_book.html', authors=authors)
+
+
+@app.route('/book/<int:book_id>/delete', methods=['POST'])
+def delete_book(book_id):
+    """
+    Delete a book by its ID.
+    Also deletes the author if they have no other books left.
+    """
+    book = Book.query.get_or_404(book_id)
+    author = book.author
+
+    db.session.delete(book)
+    db.session.commit()
+
+    remaining_books = Book.query.filter_by(author_id=author.id).count()
+    if remaining_books == 0:
+        db.session.delete(author)
         db.session.commit()
 
-        message = f"Book '{title}' added successfully!"
-
-    return render_template('add_book.html', authors=authors, message=message)
-
+    flash(f"Deleted book '{book.title}'.", "success")
+    return redirect(url_for('home'))
 
 
 if __name__ == '__main__':
