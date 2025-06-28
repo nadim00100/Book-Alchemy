@@ -20,16 +20,31 @@ db.init_app(app)
 @app.route('/')
 def home():
     """
-    Display all books, optionally sorted by title or author.
+    Display all books, optionally filtered by a search keyword and sorted.
     """
+    search_query = request.args.get('search', '').strip()
     sort_by = request.args.get('sort_by')
 
+    # Base query joining Author to Book for author filtering
+    query = Book.query.join(Author)
+
+    # If search query is provided, filter books by title or author name (case-insensitive)
+    if search_query:
+        search_pattern = f"%{search_query}%"
+        query = query.filter(
+            db.or_(
+                Book.title.ilike(search_pattern),
+                Author.name.ilike(search_pattern)
+            )
+        )
+
+    # Sorting logic
     if sort_by == 'title':
-        books = Book.query.order_by(Book.title.asc()).all()
+        query = query.order_by(Book.title.asc())
     elif sort_by == 'author':
-        books = Book.query.join(Author).order_by(Author.name.asc()).all()
-    else:
-        books = Book.query.all()
+        query = query.order_by(Author.name.asc())
+
+    books = query.all()
 
     return render_template('home.html', books=books)
 
@@ -95,6 +110,7 @@ def add_book():
         message = f"Book '{title}' added successfully!"
 
     return render_template('add_book.html', authors=authors, message=message)
+
 
 
 if __name__ == '__main__':

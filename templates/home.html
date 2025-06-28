@@ -9,23 +9,33 @@
   <h1>Library Books</h1>
 
   <form method="get" action="/">
+    <input
+      type="text"
+      name="search"
+      placeholder="Search by title or author"
+      value="{{ request.args.get('search', '') }}"
+    />
+    <button type="submit">Search</button>
+
     <label for="sort">Sort by:</label>
     <select name="sort_by" id="sort" onchange="this.form.submit()">
-      <option value="">-- Select --</option>
-      <option value="title">Title</option>
-      <option value="author">Author</option>
+      <option value="" {% if not request.args.get('sort_by') %}selected{% endif %}>-- Select --</option>
+      <option value="title" {% if request.args.get('sort_by') == 'title' %}selected{% endif %}>Title</option>
+      <option value="author" {% if request.args.get('sort_by') == 'author' %}selected{% endif %}>Author</option>
     </select>
   </form>
 
   <br>
 
-  {% for book in books %}
-    <div>
-      <h3>{{ book.title }} - {{ book.author.name }}</h3>
-    </div>
+  {% if books %}
+    {% for book in books %}
+      <div>
+        <h3>{{ book.title }} - {{ book.author.name }}</h3>
+      </div>
+    {% endfor %}
   {% else %}
-    <p>No books found.</p>
-  {% endfor %}
+    <p>No books found matching your search.</p>
+  {% endif %}
 
   <p><a href="/add_author">Add Author</a> | <a href="/add_book">Add Book</a></p>
 </body>
