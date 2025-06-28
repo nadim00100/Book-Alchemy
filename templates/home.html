@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Library</title>
+</head>
+<body>
+  <h1>Library Books</h1>
+
+  <form method="get" action="/">
+    <label for="sort">Sort by:</label>
+    <select name="sort_by" id="sort" onchange="this.form.submit()">
+      <option value="">-- Select --</option>
+      <option value="title">Title</option>
+      <option value="author">Author</option>
+    </select>
+  </form>
+
+  <br>
+
+  {% for book in books %}
+    <div>
+      <h3>{{ book.title }} - {{ book.author.name }}</h3>
+    </div>
+  {% else %}
+    <p>No books found.</p>
+  {% endfor %}
+
+  <p><a href="/add_author">Add Author</a> | <a href="/add_book">Add Book</a></p>
+</body>
+</html>
